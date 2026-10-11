@@ -581,6 +581,27 @@ body {
   box-shadow: 0 0 0 3px rgba(74, 46, 27, 0.12);
 }
 
+.portal-input.error {
+  border-color: #EF4444 !important;
+  background-color: #FFFBFB !important;
+}
+
+.portal-input.error:focus {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+}
+
+.portal-error-msg {
+  color: #DC2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 /* Primary Brown Button */
 .portal-btn-brown {
   background: var(--portal-brown);

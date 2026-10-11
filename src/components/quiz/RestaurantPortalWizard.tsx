@@ -55,6 +55,12 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
   const [billingPeriod, setBillingPeriod] = useState<'yearly' | 'monthly'>('yearly');
   const [submittedLead, setSubmittedLead] = useState<RestaurantProfile | null>(null);
   const [showAllCuisinesMobile, setShowAllCuisinesMobile] = useState(false);
+  const [errors, setErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  }>({});
 
   // Form State
   const [form, setForm] = useState({
@@ -110,16 +116,57 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
     });
   };
 
-  // Navigation
+  // Navigation & Validation
+  const validateStep = (currentStep: number): boolean => {
+    if (currentStep === 3) {
+      const newErrors: { firstName?: string; lastName?: string; email?: string; phone?: string } = {};
+
+      if (!form.firstName.trim()) {
+        newErrors.firstName = 'First name is required';
+      }
+      if (!form.lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      }
+      if (!form.email.trim()) {
+        newErrors.email = 'Business email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+      if (!form.phone.trim()) {
+        newErrors.phone = 'Mobile phone / WhatsApp is required';
+      } else if (form.phone.trim().replace(/\D/g, '').length < 6) {
+        newErrors.phone = 'Please enter a valid phone number';
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
+
+    return true;
+  };
+
   const handlePrev = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1) {
+      setErrors({});
+      setStep(step - 1);
+    }
   };
 
   const handleNext = async () => {
+    if (!validateStep(step)) {
+      return;
+    }
+
     if (step < TOTAL_STEPS) {
+      setErrors({});
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === TOTAL_STEPS) {
+      // Guard against missing contact info if jumped directly
+      if (!validateStep(3)) {
+        setStep(3);
+        return;
+      }
       // Submit application
       setIsSubmitting(true);
       try {
@@ -289,21 +336,29 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 <label className="portal-form-label">First Name *</label>
                 <input
                   type="text"
-                  className="portal-input"
+                  className={`portal-input ${errors.firstName ? 'error' : ''}`}
                   placeholder="Marco"
                   value={form.firstName}
-                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, firstName: e.target.value });
+                    if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: undefined }));
+                  }}
                 />
+                {errors.firstName && <div className="portal-error-msg">{errors.firstName}</div>}
               </div>
               <div className="portal-form-group">
                 <label className="portal-form-label">Last Name *</label>
                 <input
                   type="text"
-                  className="portal-input"
+                  className={`portal-input ${errors.lastName ? 'error' : ''}`}
                   placeholder="Rossi"
                   value={form.lastName}
-                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, lastName: e.target.value });
+                    if (errors.lastName) setErrors((prev) => ({ ...prev, lastName: undefined }));
+                  }}
                 />
+                {errors.lastName && <div className="portal-error-msg">{errors.lastName}</div>}
               </div>
             </div>
 
@@ -311,22 +366,30 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               <label className="portal-form-label">Business Email *</label>
               <input
                 type="email"
-                className="portal-input"
+                className={`portal-input ${errors.email ? 'error' : ''}`}
                 placeholder="marco@trattoriamilano.nl"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                }}
               />
+              {errors.email && <div className="portal-error-msg">{errors.email}</div>}
             </div>
 
             <div className="portal-form-group">
               <label className="portal-form-label">Mobile Phone / WhatsApp *</label>
               <input
                 type="tel"
-                className="portal-input"
+                className={`portal-input ${errors.phone ? 'error' : ''}`}
                 placeholder="+31 6 12 34 56 78"
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, phone: e.target.value });
+                  if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+                }}
               />
+              {errors.phone && <div className="portal-error-msg">{errors.phone}</div>}
             </div>
           </div>
         )}
