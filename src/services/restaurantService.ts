@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { RestaurantProfile, LeadStatus, CrmNote, CallLog, Dish, Merchant } from '../types/onboarding';
+import { createHyperzodMerchant } from './hyperzodService';
 
 const LOCAL_STORAGE_KEY = 'spoonfull_restaurant_leads_v2';
 
@@ -341,6 +342,18 @@ export async function createMerchantFromLead(
     updatedAt: now,
   };
 
+  // Provision live merchant on Hyperzod platform (Tenant 8218)
+  let hyperzodMerchantId: string | undefined;
+  try {
+    const hzResult = await createHyperzodMerchant(lead);
+    if (hzResult.success && hzResult.merchantId) {
+      hyperzodMerchantId = hzResult.merchantId;
+      merchant.id = hzResult.merchantId;
+    }
+  } catch (err) {
+    console.warn('Hyperzod merchant provisioning skipped:', err);
+  }
+
   // Update lead
   lead.merchantId = merchant.id;
   lead.merchantCode = merchant.merchantCode;
@@ -350,7 +363,9 @@ export async function createMerchantFromLead(
     {
       id: `note-${Date.now()}`,
       author: 'Admin (Merchant Provisioning)',
-      text: `Created live Spoonfull merchant entity ${merchantCode}. Store status: Active, Accepting Orders.`,
+      text: hyperzodMerchantId
+        ? `Created live Spoonfull merchant entity ${merchantCode} on Hyperzod (Tenant 8218, ID: ${hyperzodMerchantId}). Store status: Active, Accepting Orders.`
+        : `Created live Spoonfull merchant entity ${merchantCode}. Store status: Active, Accepting Orders.`,
       createdAt: now,
     },
     ...(lead.adminNotes || []),
