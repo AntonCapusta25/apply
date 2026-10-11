@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
   ArrowRight,
@@ -35,6 +35,7 @@ import { createRestaurantLead } from '../../services/restaurantService';
 import { sendOnboardingNotifications } from '../../services/emailService';
 import { trackRestaurantLeadSubmitted } from '../../lib/metaPixel';
 import { MenuUploadAndEditorStep } from './steps/MenuUploadAndEditorStep';
+import { Language, translations } from '../../translations/wizardTranslations';
 
 interface RestaurantPortalWizardProps {
   onGoToCrm?: () => void;
@@ -62,6 +63,36 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
     phone?: string;
   }>({});
 
+  // Language State with persistence & Dutch auto-detection
+  const [lang, setLang] = useState<Language>(() => {
+    const saved = localStorage.getItem('spoonfull_lang');
+    if (saved === 'nl' || saved === 'en') return saved;
+    if (typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('nl')) {
+      return 'nl';
+    }
+    return 'en';
+  });
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectLanguage = (newLang: Language) => {
+    setLang(newLang);
+    localStorage.setItem('spoonfull_lang', newLang);
+    setLangMenuOpen(false);
+  };
+
+  const t = translations[lang];
+
   // Form State
   const [form, setForm] = useState({
     city: 'Amsterdam',
@@ -83,10 +114,10 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
   // 4 Chapters calculation
   const getCurrentChapter = () => {
-    if (step <= 3) return { num: 1, name: 'The Basics', pct: Math.round((step / TOTAL_STEPS) * 100) };
-    if (step <= 5) return { num: 2, name: 'Restaurant & Location', pct: Math.round((step / TOTAL_STEPS) * 100) };
-    if (step <= 8) return { num: 3, name: 'Operations & Menu', pct: Math.round((step / TOTAL_STEPS) * 100) };
-    return { num: 4, name: 'Launch Offer & Setup', pct: 100 };
+    if (step <= 3) return { num: 1, name: t.chapters[1], pct: Math.round((step / TOTAL_STEPS) * 100) };
+    if (step <= 5) return { num: 2, name: t.chapters[2], pct: Math.round((step / TOTAL_STEPS) * 100) };
+    if (step <= 8) return { num: 3, name: t.chapters[3], pct: Math.round((step / TOTAL_STEPS) * 100) };
+    return { num: 4, name: t.chapters[4], pct: 100 };
   };
 
   const chapter = getCurrentChapter();
@@ -122,20 +153,20 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
       const newErrors: { firstName?: string; lastName?: string; email?: string; phone?: string } = {};
 
       if (!form.firstName.trim()) {
-        newErrors.firstName = 'First name is required';
+        newErrors.firstName = t.errors.firstNameReq;
       }
       if (!form.lastName.trim()) {
-        newErrors.lastName = 'Last name is required';
+        newErrors.lastName = t.errors.lastNameReq;
       }
       if (!form.email.trim()) {
-        newErrors.email = 'Business email is required';
+        newErrors.email = t.errors.emailReq;
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        newErrors.email = 'Please enter a valid email address';
+        newErrors.email = t.errors.emailInvalid;
       }
       if (!form.phone.trim()) {
-        newErrors.phone = 'Mobile phone / WhatsApp is required';
+        newErrors.phone = t.errors.phoneReq;
       } else if (form.phone.trim().replace(/\D/g, '').length < 6) {
-        newErrors.phone = 'Please enter a valid phone number';
+        newErrors.phone = t.errors.phoneInvalid;
       }
 
       setErrors(newErrors);
@@ -232,8 +263,36 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
       {/* Top Section: Language Switch & Progress Bar */}
       <div className="wizard-top-area">
         <div className="wizard-header">
-          <div className="wizard-lang-pill">
-            <span>🌐</span> 🇬🇧 EN ˅
+          <div className="wizard-lang-dropdown-container" ref={langDropdownRef}>
+            <button
+              type="button"
+              className="wizard-lang-pill"
+              onClick={() => setLangMenuOpen((prev) => !prev)}
+              aria-label="Select language"
+            >
+              <span>🌐</span> {t.langPillLabel} <span style={{ fontSize: '0.65rem', marginLeft: '2px' }}>▼</span>
+            </button>
+
+            {langMenuOpen && (
+              <div className="wizard-lang-dropdown-menu">
+                <button
+                  type="button"
+                  className={`wizard-lang-menu-item ${lang === 'en' ? 'active' : ''}`}
+                  onClick={() => handleSelectLanguage('en')}
+                >
+                  <span>{t.langEn}</span>
+                  {lang === 'en' && <Check size={14} color="var(--portal-brown)" />}
+                </button>
+                <button
+                  type="button"
+                  className={`wizard-lang-menu-item ${lang === 'nl' ? 'active' : ''}`}
+                  onClick={() => handleSelectLanguage('nl')}
+                >
+                  <span>{t.langNl}</span>
+                  {lang === 'nl' && <Check size={14} color="var(--portal-brown)" />}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -267,12 +326,13 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 1: City Selection */}
         {step === 1 && (
           <div>
-            <h1 className="wizard-step-title font-display">Where is your restaurant located?</h1>
-            <p className="wizard-step-subtitle">Select your operating city to verify delivery courier dispatch</p>
+            <h1 className="wizard-step-title font-display">{t.step1Title}</h1>
+            <p className="wizard-step-subtitle">{t.step1Subtitle}</p>
 
             <div className="wizard-grid-cities">
               {DUTCH_CITIES.map((c) => {
                 const isSelected = form.city === c;
+                const label = c === 'Other city' ? t.step1OtherCity : c;
                 return (
                   <button
                     key={c}
@@ -284,7 +344,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                     className={`portal-card-btn ${isSelected ? 'selected' : ''}`}
                   >
                     <MapPin size={18} style={{ color: 'var(--portal-brown)' }} />
-                    <span>{c}</span>
+                    <span>{label}</span>
                   </button>
                 );
               })}
@@ -295,13 +355,14 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 2: Cuisines */}
         {step === 2 && (
           <div>
-            <h1 className="wizard-step-title font-display">What cuisine does your kitchen serve?</h1>
-            <p className="wizard-step-subtitle">Select up to 3 culinary styles ({form.cuisines.length}/3)</p>
+            <h1 className="wizard-step-title font-display">{t.step2Title}</h1>
+            <p className="wizard-step-subtitle">{t.step2Subtitle(form.cuisines.length)}</p>
 
             <div className={`wizard-cuisines-container ${showAllCuisinesMobile ? 'expanded-mobile' : ''}`}>
               {RESTAURANT_CUISINES.map((c, index) => {
                 const isSelected = form.cuisines.includes(c);
                 const isExtraMobile = index >= 6 && !isSelected;
+                const label = t.cuisines[c] || c;
                 return (
                   <button
                     key={c}
@@ -309,7 +370,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                     onClick={() => handleToggleCuisine(c)}
                     className={`portal-pill-btn ${isSelected ? 'selected' : ''} ${isExtraMobile ? 'extra-cuisine-mobile' : ''}`}
                   >
-                    {c}
+                    {label}
                   </button>
                 );
               })}
@@ -319,7 +380,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 className="cuisine-mobile-toggle-btn"
                 onClick={() => setShowAllCuisinesMobile((prev) => !prev)}
               >
-                {showAllCuisinesMobile ? 'Show fewer styles ↑' : `+ More cuisines (${RESTAURANT_CUISINES.length - 6}) ↓`}
+                {showAllCuisinesMobile ? t.step2ShowFewer : t.step2MoreCuisines(RESTAURANT_CUISINES.length - 6)}
               </button>
             </div>
           </div>
@@ -328,16 +389,16 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 3: Owner & Contact Info */}
         {step === 3 && (
           <div style={{ maxWidth: '480px', margin: '0 auto' }}>
-            <h1 className="wizard-step-title font-display">Restaurant Manager / Owner Details</h1>
-            <p className="wizard-step-subtitle">How can the Spoonfull partnership team contact you?</p>
+            <h1 className="wizard-step-title font-display">{t.step3Title}</h1>
+            <p className="wizard-step-subtitle">{t.step3Subtitle}</p>
 
             <div className="wizard-grid-2col">
               <div className="portal-form-group">
-                <label className="portal-form-label">First Name *</label>
+                <label className="portal-form-label">{t.step3FirstName}</label>
                 <input
                   type="text"
                   className={`portal-input ${errors.firstName ? 'error' : ''}`}
-                  placeholder="Marco"
+                  placeholder={t.step3FirstNamePlaceholder}
                   value={form.firstName}
                   onChange={(e) => {
                     setForm({ ...form, firstName: e.target.value });
@@ -347,11 +408,11 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 {errors.firstName && <div className="portal-error-msg">{errors.firstName}</div>}
               </div>
               <div className="portal-form-group">
-                <label className="portal-form-label">Last Name *</label>
+                <label className="portal-form-label">{t.step3LastName}</label>
                 <input
                   type="text"
                   className={`portal-input ${errors.lastName ? 'error' : ''}`}
-                  placeholder="Rossi"
+                  placeholder={t.step3LastNamePlaceholder}
                   value={form.lastName}
                   onChange={(e) => {
                     setForm({ ...form, lastName: e.target.value });
@@ -363,11 +424,11 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             </div>
 
             <div className="portal-form-group">
-              <label className="portal-form-label">Business Email *</label>
+              <label className="portal-form-label">{t.step3Email}</label>
               <input
                 type="email"
                 className={`portal-input ${errors.email ? 'error' : ''}`}
-                placeholder="marco@trattoriamilano.nl"
+                placeholder={t.step3EmailPlaceholder}
                 value={form.email}
                 onChange={(e) => {
                   setForm({ ...form, email: e.target.value });
@@ -378,11 +439,11 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             </div>
 
             <div className="portal-form-group">
-              <label className="portal-form-label">Mobile Phone / WhatsApp *</label>
+              <label className="portal-form-label">{t.step3Phone}</label>
               <input
                 type="tel"
                 className={`portal-input ${errors.phone ? 'error' : ''}`}
-                placeholder="+31 6 12 34 56 78"
+                placeholder={t.step3PhonePlaceholder}
                 value={form.phone}
                 onChange={(e) => {
                   setForm({ ...form, phone: e.target.value });
@@ -397,16 +458,16 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 4: Restaurant Name */}
         {step === 4 && (
           <div style={{ maxWidth: '520px', margin: '0 auto' }}>
-            <h1 className="wizard-step-title font-display">What is your restaurant name?</h1>
-            <p className="wizard-step-subtitle">This will be your storefront on the Spoonfull discovery app</p>
+            <h1 className="wizard-step-title font-display">{t.step4Title}</h1>
+            <p className="wizard-step-subtitle">{t.step4Subtitle}</p>
 
             <div className="portal-form-group">
-              <label className="portal-form-label">Official Restaurant Brand Name *</label>
+              <label className="portal-form-label">{t.step4BrandLabel}</label>
               <input
                 type="text"
                 className="portal-input"
                 style={{ fontSize: '1.15rem', fontWeight: 800, height: '52px' }}
-                placeholder="e.g. Trattoria Da Luigi or Tokyo Buns Bar"
+                placeholder={t.step4BrandPlaceholder}
                 value={form.restaurantName}
                 onChange={(e) => setForm({ ...form, restaurantName: e.target.value })}
               />
@@ -417,15 +478,15 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 5: Kitchen Address */}
         {step === 5 && (
           <div style={{ maxWidth: '520px', margin: '0 auto' }}>
-            <h1 className="wizard-step-title font-display">Where is your kitchen located?</h1>
-            <p className="wizard-step-subtitle">Couriers and customer pickups will arrive at this address</p>
+            <h1 className="wizard-step-title font-display">{t.step5Title}</h1>
+            <p className="wizard-step-subtitle">{t.step5Subtitle}</p>
 
             <div className="portal-form-group">
-              <label className="portal-form-label">Street Address & House Number *</label>
+              <label className="portal-form-label">{t.step5StreetLabel}</label>
               <input
                 type="text"
                 className="portal-input"
-                placeholder="e.g. Herengracht 142"
+                placeholder={t.step5StreetPlaceholder}
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
@@ -433,17 +494,17 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
             <div className="wizard-grid-2col">
               <div className="portal-form-group">
-                <label className="portal-form-label">Postal Code</label>
+                <label className="portal-form-label">{t.step5PostalLabel}</label>
                 <input
                   type="text"
                   className="portal-input"
-                  placeholder="1015 BN"
+                  placeholder={t.step5PostalPlaceholder}
                   value={form.postalCode}
                   onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
                 />
               </div>
               <div className="portal-form-group">
-                <label className="portal-form-label">City</label>
+                <label className="portal-form-label">{t.step5CityLabel}</label>
                 <input type="text" className="portal-input" value={form.city} readOnly />
               </div>
             </div>
@@ -453,12 +514,13 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 6: Fulfillment Model */}
         {step === 6 && (
           <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <h1 className="wizard-step-title font-display">What is your restaurant concept?</h1>
-            <p className="wizard-step-subtitle">Select your primary operation and kitchen fulfillment setup</p>
+            <h1 className="wizard-step-title font-display">{t.step6Title}</h1>
+            <p className="wizard-step-subtitle">{t.step6Subtitle}</p>
 
             <div className="wizard-grid-services">
               {RESTAURANT_SERVICE_OPTIONS.map((item) => {
                 const isSelected = form.serviceType === item.id;
+                const serviceInfo = t.services[item.id] || { label: item.label, desc: item.desc };
                 return (
                   <div
                     key={item.id}
@@ -479,10 +541,10 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                   >
                     <div className="service-icon" style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{item.icon}</div>
                     <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--portal-text-primary)', marginBottom: '0.25rem' }}>
-                      {item.label}
+                      {serviceInfo.label}
                     </h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--portal-text-muted)', lineHeight: 1.4 }}>
-                      {item.desc}
+                      {serviceInfo.desc}
                     </p>
                   </div>
                 );
@@ -494,17 +556,17 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
         {/* STEP 7: Operating Schedule */}
         {step === 7 && (
           <div>
-            <h1 className="wizard-step-title font-display">When will you be open on Spoonfull?</h1>
-            <p className="wizard-step-subtitle">Select your active kitchen order shifts</p>
+            <h1 className="wizard-step-title font-display">{t.step7Title}</h1>
+            <p className="wizard-step-subtitle">{t.step7Subtitle}</p>
 
             <div className="wizard-grid-availability">
               {[
-                { id: 'mon_wed', label: 'Mon – Wed (Midweek Lunch & Dinner)' },
-                { id: 'thu_sun', label: 'Thu – Sun (Peak Weekend Shifts)' },
-                { id: 'full_week', label: '7 Days a Week Full Service' },
-                { id: 'weekends_only', label: 'Friday & Weekends Only' },
-                { id: 'lunch_rush', label: 'Lunch Only (11:30 - 15:00)' },
-                { id: 'dinner_rush', label: 'Dinner Only (17:00 - 22:30)' },
+                { id: 'mon_wed', label: t.schedules.mon_wed },
+                { id: 'thu_sun', label: t.schedules.thu_sun },
+                { id: 'full_week', label: t.schedules.full_week },
+                { id: 'weekends_only', label: t.schedules.weekends_only },
+                { id: 'lunch_rush', label: t.schedules.lunch_rush },
+                { id: 'dinner_rush', label: t.schedules.dinner_rush },
               ].map((item) => {
                 const isSelected = form.availability.includes(item.id);
                 return (
@@ -532,6 +594,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               setForm({ ...form, dishes: newDishes, uploadedMenuFilename: filename || form.uploadedMenuFilename })
             }
             restaurantName={form.restaurantName}
+            language={lang}
           />
         )}
 
@@ -554,23 +617,24 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 marginBottom: '1rem',
               }}
             >
-              <Sparkles size={16} /> Exclusive Restaurant Partner Launch Offer
+              <Sparkles size={16} /> {t.step9Badge}
             </div>
 
-            <h1 className="wizard-step-title font-display">Choose Your Restaurant Launch Offer</h1>
+            <h1 className="wizard-step-title font-display">{t.step9Title}</h1>
             <p className="wizard-step-subtitle">
-              Instead of upfront commission plans, we kickstart your kitchen with fee credits or 2 months of free usage. Both options include a free POS machine and personal setup call.
+              {t.step9Subtitle}
             </p>
 
             {/* Launch Offer Choice Cards */}
             <div className="wizard-grid-offers">
-              {LAUNCH_OFFERS.map((offer) => {
-                const isSelected = form.launchOffer === offer.id;
+              {LAUNCH_OFFERS.map((baseOffer) => {
+                const isSelected = form.launchOffer === baseOffer.id;
+                const offer = t.offers[baseOffer.id] || baseOffer;
                 return (
                   <div
-                    key={offer.id}
+                    key={baseOffer.id}
                     className="wizard-offer-card"
-                    onClick={() => setForm({ ...form, launchOffer: offer.id })}
+                    onClick={() => setForm({ ...form, launchOffer: baseOffer.id })}
                     style={{
                       background: '#FFFFFF',
                       border: `2.5px solid ${isSelected ? 'var(--portal-brown)' : '#E2E8F0'}`,
@@ -586,7 +650,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    {offer.popular && (
+                    {baseOffer.popular && (
                       <span
                         style={{
                           position: 'absolute',
@@ -603,7 +667,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        ★ Recommended Option
+                        {t.step9Recommended}
                       </span>
                     )}
 
@@ -689,7 +753,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <Gift size={20} style={{ color: 'var(--portal-brown)' }} />
                 <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--portal-text-primary)', margin: 0 }}>
-                  Included with Every Spoonfull Restaurant Partnership
+                  {t.includedBanner.title}
                 </h4>
               </div>
 
@@ -722,10 +786,10 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                   </div>
                   <div>
                     <strong style={{ fontSize: '0.925rem', color: '#0F172A', display: 'block', marginBottom: '0.2rem' }}>
-                      Free Touchscreen POS Terminal Provided
+                      {t.includedBanner.posTitle}
                     </strong>
                     <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, lineHeight: 1.45 }}>
-                      We deliver a dedicated Spoonfull touchscreen terminal with integrated thermal kitchen receipt printer directly to your venue at zero cost.
+                      {t.includedBanner.posDesc}
                     </p>
                   </div>
                 </div>
@@ -758,10 +822,10 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                   </div>
                   <div>
                     <strong style={{ fontSize: '0.925rem', color: '#0F172A', display: 'block', marginBottom: '0.2rem' }}>
-                      Personal Setup Call to Connect Everything
+                      {t.includedBanner.callTitle}
                     </strong>
                     <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, lineHeight: 1.45 }}>
-                      We will personally call you at <strong>{form.phone || 'your phone number'}</strong> to review your menu, connect printer hardware, and launch your kitchen live.
+                      {t.includedBanner.callDesc(form.phone)}
                     </p>
                   </div>
                 </div>
@@ -790,9 +854,9 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               <CheckCircle2 size={36} />
             </div>
 
-            <h1 className="wizard-step-title font-display">Restaurant Application Received!</h1>
+            <h1 className="wizard-step-title font-display">{t.step10Title}</h1>
             <p className="wizard-step-subtitle">
-              Your restaurant menu with {form.dishes.length} dishes is submitted to Spoonfull. We are preparing your free POS hardware and will call you to complete setup.
+              {t.step10Subtitle}
             </p>
 
             {submittedLead && (
@@ -809,7 +873,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--portal-brown)', textTransform: 'uppercase' }}>
-                    Spoonfull Onboarding Snapshot
+                    {t.step10DetailsTitle}
                   </span>
                   <span style={{ background: '#ECFDF5', color: '#065F46', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700 }}>
                     ● Application Queued &amp; Notified
@@ -831,23 +895,23 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                   </div>
                   <div>
                     <div style={{ color: 'var(--portal-text-muted)', fontSize: '0.75rem' }}>MENU ITEMS</div>
-                    <div style={{ fontWeight: 700, color: 'var(--portal-brown)' }}>{submittedLead.dishes?.length || 0} Dishes Attached</div>
+                    <div style={{ fontWeight: 700, color: 'var(--portal-brown)' }}>{t.step10DishesAttached(submittedLead.dishes?.length || 0)}</div>
                   </div>
 
                   <div style={{ gridColumn: '1 / -1', background: '#FAF8F5', border: '1px solid #EEDFD5', padding: '0.85rem 1rem', borderRadius: '8px' }}>
-                    <div style={{ color: 'var(--portal-text-muted)', fontSize: '0.725rem', fontWeight: 700 }}>SELECTED LAUNCH PACKAGE &amp; HARDWARE</div>
+                    <div style={{ color: 'var(--portal-text-muted)', fontSize: '0.725rem', fontWeight: 700 }}>{t.step10PackageTitle}</div>
                     <div style={{ fontWeight: 800, color: '#059669', fontSize: '0.95rem', marginTop: '2px' }}>
-                      🎁 {submittedLead.launchOffer === 'credits_3k' ? '€3,000 Fee Credit Pool' : '2 Months Free of Charge Usage (0% Commission)'}
+                      🎁 {submittedLead.launchOffer === 'credits_3k' ? (lang === 'nl' ? '€3.000 Commissietegoed' : '€3,000 Fee Credit Pool') : (lang === 'nl' ? '2 Maanden Volledig Gratis (0% Commissie)' : '2 Months Free of Charge Usage (0% Commission)')}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '3px' }}>
-                      ✅ Complimentary Spoonfull POS machine &amp; receipt printer included • We will call {submittedLead.phone} to configure hardware
+                      {t.step10HardwareNote(submittedLead.phone)}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <span style={{ color: '#059669', fontWeight: 700 }}>✓ SendGrid Notifications Wired:</span>
-                  <span>Confirmation emailed to {submittedLead.email} &amp; admin team alerted at bangalexf@gmail.com</span>
+                  <span>{t.step10NotificationsNote(submittedLead.email)}</span>
                 </div>
               </div>
             )}
@@ -858,7 +922,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 className="portal-btn-brown"
                 style={{ padding: '0.85rem 2rem' }}
               >
-                Submit Another Location or Restaurant
+                {t.step10SubmitAnother}
               </button>
             </div>
           </div>
@@ -874,7 +938,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             disabled={step === 1}
             className="wizard-back-btn"
           >
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t.navBack}
           </button>
 
           <button
@@ -885,15 +949,15 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
           >
             {isSubmitting ? (
               <>
-                Submitting... <Loader2 size={16} className="animate-spin" />
+                {t.navSubmitting} <Loader2 size={16} className="animate-spin" />
               </>
             ) : step === TOTAL_STEPS ? (
               <>
-                Submit application <ArrowRight size={16} />
+                {t.navSubmitApplication} <ArrowRight size={16} />
               </>
             ) : (
               <>
-                Next <ArrowRight size={16} />
+                {t.navNext} <ArrowRight size={16} />
               </>
             )}
           </button>

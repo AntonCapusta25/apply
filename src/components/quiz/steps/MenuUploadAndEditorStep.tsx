@@ -14,12 +14,14 @@ import {
 } from 'lucide-react';
 import { Dish } from '../../../types/onboarding';
 import { parseUploadedMenuFile } from '../../../services/menuParserService';
+import { Language, translations } from '../../../translations/wizardTranslations';
 
 interface MenuUploadAndEditorStepProps {
   dishes: Dish[];
   uploadedFilename?: string;
   onUpdateDishes: (dishes: Dish[], filename?: string) => void;
   restaurantName: string;
+  language?: Language;
 }
 
 const SAMPLE_PHOTO_PRESETS = [
@@ -64,7 +66,9 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
   uploadedFilename,
   onUpdateDishes,
   restaurantName,
+  language = 'en',
 }) => {
+  const t = translations[language];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [editingImageDishId, setEditingImageDishId] = useState<string | null>(null);
@@ -141,10 +145,10 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
   return (
     <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'left' }}>
       <h1 className="wizard-step-title font-display" style={{ textAlign: 'center' }}>
-        Upload & Edit Your Restaurant Menu
+        {t.step8Title}
       </h1>
       <p className="wizard-step-subtitle" style={{ textAlign: 'center' }}>
-        Drop your menu file (PDF, CSV, image) and fine-tune your dishes with prices and high-res photos.
+        {t.step8Subtitle}
       </p>
 
       {/* 1. Upload Window Box */}
@@ -188,13 +192,13 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
 
         <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.25rem' }}>
           {isParsing
-            ? 'Analyzing menu dishes, categories & prices...'
+            ? t.step8DropzoneAnalyzing
             : uploadedFilename
-            ? `Uploaded: ${uploadedFilename}`
-            : 'Click to Upload Menu or Drop File Here'}
+            ? t.step8DropzoneUploaded(uploadedFilename)
+            : t.step8DropzonePlaceholder}
         </h3>
         <p style={{ fontSize: '0.85rem', color: '#64748B', maxWidth: '420px', margin: '0 auto' }}>
-          Supports <strong>PDF, CSV, Excel, PNG, JPG</strong> or food menu photos.
+          {t.step8DropzoneFormats}
         </p>
 
         {parseNotice && (
@@ -231,7 +235,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
               fontWeight: 800,
             }}
           >
-            <Check size={14} /> File Attached • {dishes.length} Dishes in Editor
+            <Check size={14} /> {t.step8AttachedSummary(dishes.length)}
           </div>
         )}
       </div>
@@ -256,7 +260,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
               cursor: 'pointer',
             }}
           >
-            <Plus size={16} /> + Add Your First Dish Manually
+            <Plus size={16} /> {t.step8AddManualDish}
           </button>
         </div>
       )}
@@ -293,7 +297,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                     cursor: 'pointer',
                   }}
                 >
-                  {cat}
+                  {t.dishCategories[cat] || cat}
                 </button>
               ))}
             </div>
@@ -315,7 +319,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                 cursor: 'pointer',
               }}
             >
-              <Plus size={15} /> Add Dish
+              <Plus size={15} /> {t.step8AddDish}
             </button>
           </div>
 
@@ -379,7 +383,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                       gap: '2px',
                     }}
                   >
-                    <Camera size={11} /> {dish.imageUrl ? 'Change' : '+ Photo'}
+                    <Camera size={11} /> {dish.imageUrl ? t.dishCard.changePhoto : t.dishCard.pickPhoto}
                   </button>
                 </div>
 
@@ -390,7 +394,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                       type="text"
                       className="portal-input"
                       style={{ height: '38px', fontSize: '0.9rem', fontWeight: 700 }}
-                      placeholder="Dish Name (e.g. Truffle Tagliolini)"
+                      placeholder={t.dishCard.namePlaceholder}
                       value={dish.name}
                       onChange={(e) => handleDishChange(dish.id, 'name', e.target.value)}
                     />
@@ -427,11 +431,11 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                       value={dish.category}
                       onChange={(e) => handleDishChange(dish.id, 'category', e.target.value)}
                     >
-                      <option value="Starters">Starters</option>
-                      <option value="Mains">Mains</option>
-                      <option value="Desserts">Desserts</option>
-                      <option value="Sides">Sides</option>
-                      <option value="Drinks">Drinks</option>
+                      <option value="Starters">{t.dishCategories.Starters || 'Starters'}</option>
+                      <option value="Mains">{t.dishCategories.Mains || 'Mains'}</option>
+                      <option value="Desserts">{t.dishCategories.Desserts || 'Desserts'}</option>
+                      <option value="Sides">{t.dishCategories.Sides || 'Sides'}</option>
+                      <option value="Drinks">{t.dishCategories.Drinks || 'Drinks'}</option>
                     </select>
                   </div>
 
@@ -439,7 +443,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                     type="text"
                     className="portal-input"
                     style={{ height: '36px', fontSize: '0.825rem' }}
-                    placeholder="Short description (ingredients, dietary notes, portion size...)"
+                    placeholder={t.dishCard.descPlaceholder}
                     value={dish.description}
                     onChange={(e) => handleDishChange(dish.id, 'description', e.target.value)}
                   />
@@ -456,7 +460,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                       }}
                     >
                       <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem' }}>
-                        Select Photo Preset or Paste Image URL:
+                        {language === 'nl' ? 'Kies fotovoorbeeld of plak afbeeldingslink:' : 'Select Photo Preset or Paste Image URL:'}
                       </p>
 
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', overflowX: 'auto' }}>
@@ -483,7 +487,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                           type="url"
                           className="portal-input"
                           style={{ height: '32px', fontSize: '0.78rem' }}
-                          placeholder="Paste image link: https://..."
+                          placeholder={language === 'nl' ? 'Plak afbeeldingslink: https://...' : 'Paste image link: https://...'}
                           value={customImageUrl}
                           onChange={(e) => setCustomImageUrl(e.target.value)}
                         />
@@ -493,7 +497,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                           className="portal-btn-brown"
                           style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.75rem' }}
                         >
-                          Apply
+                          {language === 'nl' ? 'Toepassen' : 'Apply'}
                         </button>
                       </div>
                     </div>
@@ -512,7 +516,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
                     padding: '4px',
                     borderRadius: '6px',
                   }}
-                  title="Remove dish"
+                  title={t.dishCard.removeDish}
                 >
                   <Trash2 size={16} />
                 </button>
