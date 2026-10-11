@@ -1,0 +1,294 @@
+/* CRM Portal Theme - Clean White & Warm Brown Palette */
+
+.portal-crm-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 4rem;
+  background-color: #FAF8F5;
+  color: #0F172A;
+  min-height: calc(100vh - 65px);
+}
+
+.portal-crm-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.portal-crm-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.portal-crm-subtitle {
+  color: #64748B;
+  font-size: 0.925rem;
+  margin-top: 0.2rem;
+}
+
+/* Stat Cards */
+.portal-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.portal-stat-box {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.portal-stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-stat-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.portal-stat-label {
+  font-size: 0.825rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+/* Toolbar */
+.portal-toolbar {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.portal-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FAF8F5;
+  border: 1px solid #E2E8F0;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  min-width: 270px;
+}
+
+.portal-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #0F172A;
+  width: 100%;
+}
+
+.portal-select-filter {
+  background: #FAF8F5;
+  border: 1px solid #E2E8F0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+}
+
+.portal-select-filter:focus {
+  border-color: #4A2E1B;
+}
+
+/* Kanban Columns */
+.portal-kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1.15rem;
+  overflow-x: auto;
+  padding-bottom: 1.5rem;
+}
+
+.portal-kanban-column {
+  background: #F4EFEB;
+  border: 1px solid #E8DFD7;
+  border-radius: 18px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+}
+
+.portal-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #E2D7CE;
+}
+
+.portal-column-title {
+  font-size: 0.925rem;
+  font-weight: 800;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.portal-column-count {
+  background: #FFFFFF;
+  border: 1px solid #E2D7CE;
+  color: #4A2E1B;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+/* Kanban Lead Card */
+.portal-lead-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.portal-lead-card:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.portal-lead-name {
+  font-size: 0.975rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 0.2rem;
+}
+
+.portal-lead-chef {
+  font-size: 0.8rem;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.65rem;
+}
+
+.portal-tag-pill {
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #FAF8F5;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+}
+
+.portal-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 0.55rem;
+  margin-top: 0.65rem;
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+
+/* White Table View */
+.portal-table-box {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.portal-table th {
+  background: #FAF8F5;
+  padding: 0.85rem 1.25rem;
+  color: #475569;
+  font-weight: 700;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.portal-table td {
+  padding: 0.95rem 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+  color: #0F172A;
+}
+
+.portal-table tr:hover td {
+  background: #FAF8F5;
+}
+
+/* Light Status Pills */
+.portal-status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge-new { background: #E0F2FE; color: #0284C7; }
+.badge-contacted { background: #EDE9FE; color: #6D28D9; }
+.badge-vetted { background: #FEF3C7; color: #D97706; }
+.badge-contract_pending { background: #FCE7F3; color: #DB2777; }
+.badge-live { background: #DCFCE7; color: #15803D; }
+.badge-paused { background: #F1F5F9; color: #64748B; }
+
+/* Lead Drawer in Light Theme */
+.portal-modal-sheet {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  max-width: 780px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  padding: 2rem;
+  position: relative;
+  color: #0F172A;
+}
