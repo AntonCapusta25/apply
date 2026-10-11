@@ -256,15 +256,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <h1 className="wizard-step-title font-display">Where is your restaurant located?</h1>
             <p className="wizard-step-subtitle">Select your operating city to verify delivery courier dispatch</p>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem',
-                maxWidth: '680px',
-                margin: '0 auto',
-              }}
-            >
+            <div className="wizard-grid-cities">
               {DUTCH_CITIES.map((c) => {
                 const isSelected = form.city === c;
                 return (
@@ -325,7 +317,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <h1 className="wizard-step-title font-display">Restaurant Manager / Owner Details</h1>
             <p className="wizard-step-subtitle">How can the Spoonfull partnership team contact you?</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="wizard-grid-2col">
               <div className="portal-form-group">
                 <label className="portal-form-label">First Name *</label>
                 <input
@@ -409,7 +401,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="wizard-grid-2col">
               <div className="portal-form-group">
                 <label className="portal-form-label">Postal Code</label>
                 <input
@@ -434,7 +426,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <h1 className="wizard-step-title font-display">What is your restaurant concept?</h1>
             <p className="wizard-step-subtitle">Select your primary operation and kitchen fulfillment setup</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', textAlign: 'left' }}>
+            <div className="wizard-grid-services">
               {RESTAURANT_SERVICE_OPTIONS.map((item) => {
                 const isSelected = form.serviceType === item.id;
                 return (
@@ -474,15 +466,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <h1 className="wizard-step-title font-display">When will you be open on Spoonfull?</h1>
             <p className="wizard-step-subtitle">Select your active kitchen order shifts</p>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '0.85rem',
-                maxWidth: '640px',
-                margin: '0 auto',
-              }}
-            >
+            <div className="wizard-grid-availability">
               {[
                 { id: 'mon_wed', label: 'Mon – Wed (Midweek Lunch & Dinner)' },
                 { id: 'thu_sun', label: 'Thu – Sun (Peak Weekend Shifts)' },
@@ -548,15 +532,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             </p>
 
             {/* Launch Offer Choice Cards */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '1.25rem',
-                textAlign: 'left',
-                marginBottom: '2rem',
-              }}
-            >
+            <div className="wizard-grid-offers">
               {LAUNCH_OFFERS.map((offer) => {
                 const isSelected = form.launchOffer === offer.id;
                 return (

@@ -348,7 +348,7 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
 
                 {/* Dish Details Inputs */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.5rem' }}>
+                  <div className="dish-row-grid">
                     <input
                       type="text"
                       className="portal-input"
