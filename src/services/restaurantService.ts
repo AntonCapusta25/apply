@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { RestaurantProfile, LeadStatus, CrmNote, CallLog, Dish, Merchant } from '../types/onboarding';
-import { createHyperzodMerchant } from './hyperzodService';
+import { createHyperzodMerchant, importMenuToHyperzod } from './hyperzodService';
 
 const LOCAL_STORAGE_KEY = 'spoonfull_restaurant_leads_v2';
 
@@ -344,11 +344,19 @@ export async function createMerchantFromLead(
 
   // Provision live merchant on Hyperzod platform (Tenant 8218)
   let hyperzodMerchantId: string | undefined;
+  let menuSyncNote = '';
   try {
     const hzResult = await createHyperzodMerchant(lead);
     if (hzResult.success && hzResult.merchantId) {
       hyperzodMerchantId = hzResult.merchantId;
       merchant.id = hzResult.merchantId;
+
+      // Automatically sync categories, meals & photos to Hyperzod catalog
+      if (lead.dishes && lead.dishes.length > 0) {
+        console.log(`Syncing ${lead.dishes.length} dishes to Hyperzod merchant ${hyperzodMerchantId}...`);
+        const importRes = await importMenuToHyperzod(hyperzodMerchantId, lead.dishes);
+        menuSyncNote = ` Menu synced to Hyperzod catalog: ${importRes.importedCount}/${lead.dishes.length} dishes across ${importRes.categoriesCreated} categories.`;
+      }
     }
   } catch (err) {
     console.warn('Hyperzod merchant provisioning skipped:', err);
@@ -364,7 +372,7 @@ export async function createMerchantFromLead(
       id: `note-${Date.now()}`,
       author: 'Admin (Merchant Provisioning)',
       text: hyperzodMerchantId
-        ? `Created live Spoonfull merchant entity ${merchantCode} on Hyperzod (Tenant 8218, ID: ${hyperzodMerchantId}). Store status: Active, Accepting Orders.`
+        ? `Created live Spoonfull merchant entity ${merchantCode} on Hyperzod (Tenant 8218, ID: ${hyperzodMerchantId}). Store status: Active, Accepting Orders.${menuSyncNote}`
         : `Created live Spoonfull merchant entity ${merchantCode}. Store status: Active, Accepting Orders.`,
       createdAt: now,
     },

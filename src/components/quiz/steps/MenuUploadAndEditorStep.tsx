@@ -10,8 +10,10 @@ import {
   Utensils,
   Eye,
   Camera,
+  Loader2,
 } from 'lucide-react';
 import { Dish } from '../../../types/onboarding';
+import { parseUploadedMenuFile } from '../../../services/menuParserService';
 
 interface MenuUploadAndEditorStepProps {
   dishes: Dish[];
@@ -67,23 +69,31 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [editingImageDishId, setEditingImageDishId] = useState<string | null>(null);
   const [customImageUrl, setCustomImageUrl] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseNotice, setParseNotice] = useState<string | null>(null);
 
-  // Handle file drop / upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file drop / upload with automated parsing across any format
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const text = (event.target?.result as string) || '';
-          const parsed = parseCsvMenuText(text);
-          onUpdateDishes(parsed.length > 0 ? parsed : dishes, file.name);
-        };
-        reader.readAsText(file);
+    if (!file) return;
+
+    setIsParsing(true);
+    setParseNotice(null);
+
+    try {
+      const parsedDishes = await parseUploadedMenuFile(file);
+      if (parsedDishes.length > 0) {
+        onUpdateDishes(parsedDishes, file.name);
+        setParseNotice(`✓ Extracted ${parsedDishes.length} dishes with categories & prices from ${file.name}`);
       } else {
-        // Real file attached (PDF, image, etc.)
         onUpdateDishes(dishes, file.name);
+        setParseNotice(`✓ Attached ${file.name}`);
       }
+    } catch (err) {
+      console.error('Failed parsing menu file:', err);
+      onUpdateDishes(dishes, file.name);
+    } finally {
+      setIsParsing(false);
     }
   };
 
@@ -120,9 +130,13 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
     setCustomImageUrl('');
   };
 
-  const categories = ['All', 'Starters', 'Mains', 'Desserts', 'Sides', 'Drinks'];
+  // Dynamic categories extracted from parsed menu dishes + defaults
+  const categories = Array.from(
+    new Set(['All', 'Starters', 'Mains', 'Desserts', 'Sides', 'Drinks', ...dishes.map((d) => d.category || 'Mains')])
+  );
+
   const filteredDishes =
-    selectedCategory === 'All' ? dishes : dishes.filter((d) => d.category === selectedCategory);
+    selectedCategory === 'All' ? dishes : dishes.filter((d) => (d.category || 'Mains') === selectedCategory);
 
   return (
     <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'left' }}>
@@ -169,15 +183,38 @@ export const MenuUploadAndEditorStep: React.FC<MenuUploadAndEditorStepProps> = (
             margin: '0 auto 0.75rem',
           }}
         >
-          <UploadCloud size={26} />
+          {isParsing ? <Loader2 size={26} className="animate-spin" /> : <UploadCloud size={26} />}
         </div>
 
         <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.25rem' }}>
-          {uploadedFilename ? `Uploaded: ${uploadedFilename}` : 'Click to Upload Menu or Drop File Here'}
+          {isParsing
+            ? 'Analyzing menu dishes, categories & prices...'
+            : uploadedFilename
+            ? `Uploaded: ${uploadedFilename}`
+            : 'Click to Upload Menu or Drop File Here'}
         </h3>
         <p style={{ fontSize: '0.85rem', color: '#64748B', maxWidth: '420px', margin: '0 auto' }}>
           Supports <strong>PDF, CSV, Excel, PNG, JPG</strong> or food menu photos.
         </p>
+
+        {parseNotice && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              marginTop: '0.75rem',
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              background: '#ECFDF5',
+              color: '#065F46',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+            }}
+          >
+            <span>{parseNotice}</span>
+          </div>
+        )}
 
         {uploadedFilename && (
           <div

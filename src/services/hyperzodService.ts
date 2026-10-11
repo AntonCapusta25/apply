@@ -1,4 +1,4 @@
-import { RestaurantProfile } from '../types/onboarding';
+import { RestaurantProfile, Dish } from '../types/onboarding';
 
 const HYPERZOD_API_KEY =
   (import.meta as any).env?.VITE_HYPERZOD_API_KEY ||
@@ -11,6 +11,14 @@ export interface HyperzodCreateResult {
   merchantId?: string;
   error?: string;
   details?: any;
+}
+
+export interface HyperzodImportMenuResult {
+  success: boolean;
+  importedCount: number;
+  failedCount: number;
+  categoriesCreated: number;
+  results: { dishName: string; success: boolean; productId?: string; error?: string }[];
 }
 
 /**
@@ -154,4 +162,240 @@ export async function listHyperzodMerchants(): Promise<any[]> {
     console.error('Failed fetching Hyperzod merchants:', e);
     return [];
   }
+}
+
+/**
+ * Finds or creates a product category for a specific merchant in Hyperzod.
+ * E.g., "Main Dishes", "Starters", "Desserts", "Drinks"
+ */
+export async function getOrCreateCategory(
+  merchantId: string,
+  categoryName: string
+): Promise<string | null> {
+  const trimmedName = categoryName.trim() || 'Main Dishes';
+
+  try {
+    // 1. Check existing categories for this merchant
+    const listRes = await fetch(
+      `${HYPERZOD_BASE_URL}/merchant/v1/catalog/product-category/list?merchant_id=${merchantId}`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'X-TENANT': HYPERZOD_TENANT_ID,
+          'X-API-KEY': HYPERZOD_API_KEY,
+        },
+      }
+    );
+
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const categories: any[] = listData?.data?.data || listData?.data || [];
+      const match = categories.find(
+        (c: any) =>
+          c.name?.toLowerCase() === trimmedName.toLowerCase() ||
+          c.language_translation?.some(
+            (t: any) => t.value?.toLowerCase() === trimmedName.toLowerCase()
+          )
+      );
+      if (match) {
+        return match._id || match.category_id || match.id;
+      }
+    }
+
+    // 2. Create new category
+    const createRes = await fetch(
+      `${HYPERZOD_BASE_URL}/merchant/v1/catalog/product-category/create`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-TENANT': HYPERZOD_TENANT_ID,
+          'X-API-KEY': HYPERZOD_API_KEY,
+        },
+        body: JSON.stringify({
+          merchant_id: merchantId,
+          description: '',
+          view_type: 'card',
+          image: '',
+          sort_order: 0,
+          status: 1,
+          language_translation: [{ key: 'name', locale: 'en', value: trimmedName }],
+        }),
+      }
+    );
+
+    const createData = await createRes.json();
+    if (createRes.ok && createData?.data) {
+      return createData.data._id || createData.data.category_id || createData.data.id;
+    }
+  } catch (e) {
+    console.error(`Error in getOrCreateCategory for "${trimmedName}":`, e);
+  }
+
+  return null;
+}
+
+/**
+ * Creates a single product/dish under a merchant & category in Hyperzod
+ */
+export async function createHyperzodProduct(
+  merchantId: string,
+  dish: Dish,
+  categoryId: string
+): Promise<{ success: boolean; productId?: string; error?: string }> {
+  try {
+    const dishName = dish.name.trim();
+    if (!dishName) return { success: false, error: 'Empty dish name' };
+
+    const productImages = dish.imageUrl
+      ? [{ file_url: dish.imageUrl, is_cover: true }]
+      : [];
+
+    const productPayload = {
+      merchant_id: merchantId,
+      sku: dishName.replace(/[^a-zA-Z0-9\s]/g, '').substring(0, 40) || 'SKU',
+      language_translation: [
+        { key: 'name', locale: 'en', value: dishName },
+        { key: 'description', locale: 'en', value: dish.description || '' },
+      ],
+      product_pricing: {
+        type: 'flat',
+        price_buy: 0,
+        price_sell: Number(dish.price) || 12.0,
+        price_sell_compare: null,
+        profit: 0,
+        margin: 0,
+        is_tax_chargaeble: false,
+        tax: 0,
+      },
+      has_product_options: false,
+      product_options: [],
+      product_category: [categoryId],
+      product_tags: ['spoonfull', (dish.category || 'mains').toLowerCase()],
+      product_labels: [],
+      status: dish.isAvailable !== false,
+      is_quantity_enabled: false,
+      is_inventory_enabled: false,
+      product_inventory: 0,
+      is_featured: false,
+      sort_order: 0,
+      product_quantity: { min_quantity: 0, max_quantity: 0 },
+      product_images: productImages,
+    };
+
+    const res = await fetch(`${HYPERZOD_BASE_URL}/merchant/v1/catalog/product/create`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-TENANT': HYPERZOD_TENANT_ID,
+        'X-API-KEY': HYPERZOD_API_KEY,
+      },
+      body: JSON.stringify(productPayload),
+    });
+
+    const text = await res.text();
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    if (res.ok) {
+      return {
+        success: true,
+        productId: data?.data?.product_id || data?.data?._id || data?.data?.id,
+      };
+    } else {
+      return {
+        success: false,
+        error: data?.message || `HTTP ${res.status}: ${text}`,
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Product creation request failed',
+    };
+  }
+}
+
+/**
+ * High-level function: Uploads complete menu to Hyperzod:
+ * 1. Groups dishes by category.
+ * 2. Creates each category first.
+ * 3. Creates each dish/meal with pricing and images under its corresponding category.
+ */
+export async function importMenuToHyperzod(
+  merchantId: string,
+  dishes: Dish[]
+): Promise<HyperzodImportMenuResult> {
+  if (!dishes || dishes.length === 0) {
+    return {
+      success: true,
+      importedCount: 0,
+      failedCount: 0,
+      categoriesCreated: 0,
+      results: [],
+    };
+  }
+
+  // 1. Group unique categories
+  const categoryMap: Record<string, string> = {};
+  const uniqueCategoryNames = Array.from(
+    new Set(dishes.map((d) => d.category?.trim() || 'Main Dishes'))
+  );
+
+  let categoriesCreated = 0;
+  for (const catName of uniqueCategoryNames) {
+    const catId = await getOrCreateCategory(merchantId, catName);
+    if (catId) {
+      categoryMap[catName] = catId;
+      categoriesCreated++;
+    }
+  }
+
+  // Fallback category if any category creation fails
+  const defaultCategoryId =
+    categoryMap['Main Dishes'] ||
+    Object.values(categoryMap)[0] ||
+    (await getOrCreateCategory(merchantId, 'Main Dishes')) ||
+    '';
+
+  // 2. Create products sequentially
+  const results: { dishName: string; success: boolean; productId?: string; error?: string }[] = [];
+
+  for (const dish of dishes) {
+    const targetCatId = categoryMap[dish.category?.trim() || 'Main Dishes'] || defaultCategoryId;
+    if (!targetCatId) {
+      results.push({
+        dishName: dish.name,
+        success: false,
+        error: 'No category available',
+      });
+      continue;
+    }
+
+    const prodResult = await createHyperzodProduct(merchantId, dish, targetCatId);
+    results.push({
+      dishName: dish.name,
+      success: prodResult.success,
+      productId: prodResult.productId,
+      error: prodResult.error,
+    });
+  }
+
+  const importedCount = results.filter((r) => r.success).length;
+  const failedCount = results.filter((r) => !r.success).length;
+
+  return {
+    success: failedCount === 0,
+    importedCount,
+    failedCount,
+    categoriesCreated,
+    results,
+  };
 }
