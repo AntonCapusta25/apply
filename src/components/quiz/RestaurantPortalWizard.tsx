@@ -181,46 +181,10 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
   return (
     <div className="wizard-shell">
-      {/* Top Header */}
+      {/* Top Header: Language Switch Only */}
       <div className="wizard-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <img
-            src="/spoonfull-logo.png"
-            alt="Spoonfull Logo"
-            style={{
-              height: '46px',
-              width: 'auto',
-              borderRadius: '8px',
-              objectFit: 'contain',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-            }}
-          />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span className="font-display" style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0F172A', letterSpacing: '-0.02em' }}>
-                spoonfull
-              </span>
-              <span
-                style={{
-                  fontSize: '0.675rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  background: 'var(--portal-brown-pill)',
-                  color: 'var(--portal-brown)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                }}
-              >
-                RESTAURANTS
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="wizard-lang-pill">
-            <span>🌐</span> 🇬🇧 EN ˅
-          </div>
+        <div className="wizard-lang-pill">
+          <span>🌐</span> 🇬🇧 EN ˅
         </div>
       </div>
 
@@ -285,11 +249,12 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <p className="wizard-step-subtitle">Select up to 3 culinary styles ({form.cuisines.length}/3)</p>
 
             <div
+              className="wizard-cuisines-container"
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
-                gap: '0.75rem',
+                gap: '0.5rem',
                 maxWidth: '680px',
                 margin: '0 auto',
               }}
@@ -432,6 +397,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 return (
                   <div
                     key={item.id}
+                    className="wizard-service-card"
                     onClick={() => {
                       setForm({ ...form, serviceType: item.id });
                       setTimeout(() => setStep(7), 220);
@@ -446,7 +412,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                       transition: 'all 0.2s',
                     }}
                   >
-                    <div style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{item.icon}</div>
+                    <div className="service-icon" style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{item.icon}</div>
                     <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--portal-text-primary)', marginBottom: '0.25rem' }}>
                       {item.label}
                     </h3>
@@ -538,12 +504,13 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                 return (
                   <div
                     key={offer.id}
+                    className="wizard-offer-card"
                     onClick={() => setForm({ ...form, launchOffer: offer.id })}
                     style={{
                       background: '#FFFFFF',
                       border: `2.5px solid ${isSelected ? 'var(--portal-brown)' : '#E2E8F0'}`,
                       borderRadius: 'var(--portal-radius-lg)',
-                      padding: '1.75rem',
+                      padding: '1.25rem',
                       cursor: 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
@@ -578,6 +545,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                         <span
+                          className="wizard-offer-badge"
                           style={{
                             background: isSelected ? '#FAF8F5' : '#F8FAFC',
                             color: isSelected ? 'var(--portal-brown)' : '#64748B',
@@ -608,29 +576,29 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
                         </div>
                       </div>
 
-                      <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--portal-text-primary)', marginTop: '0.5rem', marginBottom: '0.25rem' }}>
+                      <h3 className="wizard-offer-name" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--portal-text-primary)', marginTop: '0.4rem', marginBottom: '0.2rem' }}>
                         {offer.name}
                       </h3>
 
-                      <div style={{ marginBottom: '1.25rem' }}>
+                      <div style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--portal-brown)', lineHeight: 1 }}>
+                          <span className="wizard-offer-headline" style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--portal-brown)', lineHeight: 1 }}>
                             {offer.headline}
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700, marginTop: '0.25rem' }}>
+                        <div className="wizard-offer-subheadline" style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700, marginTop: '0.2rem' }}>
                           {offer.subheadline}
                         </div>
-                        <p style={{ fontSize: '0.825rem', color: '#64748B', marginTop: '0.35rem', lineHeight: 1.4 }}>
+                        <p className="wizard-offer-tagline" style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.25rem', lineHeight: 1.35 }}>
                           {offer.tagline}
                         </p>
                       </div>
 
-                      <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <div className="wizard-offer-perks-list" style={{ borderTop: '1px solid #F1F5F9', paddingTop: '0.85rem' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                           {offer.perks.map((feat, idx) => (
-                            <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.85rem', color: 'var(--portal-text-secondary)', lineHeight: 1.35 }}>
-                              <CheckCircle2 size={16} style={{ color: '#10B981', flexShrink: 0, marginTop: '2px' }} />
+                            <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.825rem', color: 'var(--portal-text-secondary)', lineHeight: 1.3 }}>
+                              <CheckCircle2 size={15} style={{ color: '#10B981', flexShrink: 0, marginTop: '2px' }} />
                               <span>{feat}</span>
                             </li>
                           ))}
@@ -644,11 +612,12 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
             {/* Included for Everyone: POS Machine + Dedicated Setup Call */}
             <div
+              className="wizard-included-banner"
               style={{
                 background: '#FAF8F5',
                 border: '1.5px solid #EEDFD5',
                 borderRadius: 'var(--portal-radius-lg)',
-                padding: '1.5rem',
+                padding: '1.25rem',
                 textAlign: 'left',
               }}
             >
