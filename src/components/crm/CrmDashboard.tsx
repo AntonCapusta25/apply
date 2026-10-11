@@ -234,6 +234,18 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
       <div className="portal-crm-topbar">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <img
+              src="/spoonfull-logo.png"
+              alt="Spoonfull Logo"
+              style={{
+                height: '42px',
+                width: 'auto',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
+            />
+
             <span
               style={{
                 display: 'inline-flex',

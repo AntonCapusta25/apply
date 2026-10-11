@@ -175,9 +175,17 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
       {/* Top Header */}
       <div className="wizard-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="wizard-logo-badge" title="Spoonfull Partner Portal">
-            SF
-          </div>
+          <img
+            src="/spoonfull-logo.png"
+            alt="Spoonfull Logo"
+            style={{
+              height: '46px',
+              width: 'auto',
+              borderRadius: '8px',
+              objectFit: 'contain',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+          />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <span className="font-display" style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0F172A', letterSpacing: '-0.02em' }}>

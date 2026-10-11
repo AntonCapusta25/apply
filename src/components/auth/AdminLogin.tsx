@@ -75,17 +75,23 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         >
           <div
             style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'rgba(255, 255, 255, 0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 1rem auto',
+              marginBottom: '1rem',
             }}
           >
-            <Lock size={26} color="#FFFFFF" />
+            <img
+              src="/spoonfull-logo.png"
+              alt="Spoonfull Logo"
+              style={{
+                height: '76px',
+                width: 'auto',
+                borderRadius: '12px',
+                objectFit: 'contain',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              }}
+            />
           </div>
           <h2
             className="font-display"
