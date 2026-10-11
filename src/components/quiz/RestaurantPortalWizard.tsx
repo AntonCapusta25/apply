@@ -33,6 +33,7 @@ import {
 } from '../../types/onboarding';
 import { createRestaurantLead } from '../../services/restaurantService';
 import { sendOnboardingNotifications } from '../../services/emailService';
+import { trackRestaurantLeadSubmitted } from '../../lib/metaPixel';
 import { MenuUploadAndEditorStep } from './steps/MenuUploadAndEditorStep';
 
 interface RestaurantPortalWizardProps {
@@ -154,6 +155,14 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
         setSubmittedLead(newLead);
         onLeadCreated(newLead);
+
+        // Track Meta Pixel Lead event for customer-facing onboarding
+        trackRestaurantLeadSubmitted({
+          restaurantName: newLead.restaurantName,
+          city: newLead.city,
+          plan: newLead.plan,
+        });
+
         setStep(10); // Complete screen
 
         confetti({
