@@ -182,36 +182,38 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
 
   return (
     <div className="wizard-shell">
-      {/* Top Header: Language Switch Only */}
-      <div className="wizard-header">
-        <div className="wizard-lang-pill">
-          <span>🌐</span> 🇬🇧 EN ˅
+      {/* Top Section: Language Switch & Progress Bar */}
+      <div className="wizard-top-area">
+        <div className="wizard-header">
+          <div className="wizard-lang-pill">
+            <span>🌐</span> 🇬🇧 EN ˅
+          </div>
         </div>
-      </div>
 
-      {/* Segmented Progress Header (Steps 1 to 9) */}
-      {step <= TOTAL_STEPS && (
-        <div className="wizard-progress-section">
-          <div className="wizard-chapter-info">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="wizard-chapter-badge">{chapter.num}/4</span>
-              <span className="wizard-chapter-title font-display">{chapter.name}</span>
+        {/* Segmented Progress Header (Steps 1 to 9) */}
+        {step <= TOTAL_STEPS && (
+          <div className="wizard-progress-section">
+            <div className="wizard-chapter-info">
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="wizard-chapter-badge">{chapter.num}/4</span>
+                <span className="wizard-chapter-title font-display">{chapter.name}</span>
+              </div>
+              <span className="wizard-chapter-pct">{chapter.pct}%</span>
             </div>
-            <span className="wizard-chapter-pct">{chapter.pct}%</span>
-          </div>
 
-          <div className="wizard-segmented-bar" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            {[1, 2, 3, 4].map((chNum) => (
-              <div
-                key={chNum}
-                className={`wizard-segment-pill ${
-                  chNum < chapter.num ? 'active' : chNum === chapter.num ? 'current' : 'inactive'
-                }`}
-              />
-            ))}
+            <div className="wizard-segmented-bar" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              {[1, 2, 3, 4].map((chNum) => (
+                <div
+                  key={chNum}
+                  className={`wizard-segment-pill ${
+                    chNum < chapter.num ? 'active' : chNum === chapter.num ? 'current' : 'inactive'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Main Form Step Area */}
       <div className="wizard-main-content">
@@ -820,15 +822,15 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
           >
             {isSubmitting ? (
               <>
-                Submitting application... <Loader2 size={16} className="animate-spin" />
+                Submitting... <Loader2 size={16} className="animate-spin" />
               </>
             ) : step === TOTAL_STEPS ? (
               <>
-                Submit application and continue <ArrowRight size={16} />
+                Submit application <ArrowRight size={16} />
               </>
             ) : (
               <>
-                Continue to next step <ArrowRight size={16} />
+                Next <ArrowRight size={16} />
               </>
             )}
           </button>
