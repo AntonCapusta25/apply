@@ -309,13 +309,46 @@ body {
   margin: 0 auto;
 }
 
+.extra-cuisine-mobile {
+  display: inline-flex;
+}
+
+.cuisine-mobile-toggle-btn {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .wizard-cuisines-container {
-    gap: 0.35rem;
+    gap: 0.4rem;
+    max-width: 360px;
   }
   .portal-pill-btn {
-    padding: 0.35rem 0.65rem;
+    padding: 0.4rem 0.65rem;
     font-size: 0.78rem;
+    min-height: 38px;
+  }
+  .extra-cuisine-mobile {
+    display: none !important;
+  }
+  .wizard-cuisines-container.expanded-mobile .extra-cuisine-mobile {
+    display: inline-flex !important;
+  }
+  .cuisine-mobile-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    border: 1px dashed rgba(74, 46, 27, 0.35);
+    background: rgba(74, 46, 27, 0.04);
+    color: var(--portal-brown);
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cuisine-mobile-toggle-btn:active {
+    background: rgba(74, 46, 27, 0.1);
   }
 }
 

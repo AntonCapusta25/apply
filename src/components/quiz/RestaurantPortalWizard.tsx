@@ -54,6 +54,7 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<'yearly' | 'monthly'>('yearly');
   const [submittedLead, setSubmittedLead] = useState<RestaurantProfile | null>(null);
+  const [showAllCuisinesMobile, setShowAllCuisinesMobile] = useState(false);
 
   // Form State
   const [form, setForm] = useState({
@@ -248,30 +249,29 @@ export const RestaurantPortalWizard: React.FC<RestaurantPortalWizardProps> = ({
             <h1 className="wizard-step-title font-display">What cuisine does your kitchen serve?</h1>
             <p className="wizard-step-subtitle">Select up to 3 culinary styles ({form.cuisines.length}/3)</p>
 
-            <div
-              className="wizard-cuisines-container"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                maxWidth: '680px',
-                margin: '0 auto',
-              }}
-            >
-              {RESTAURANT_CUISINES.map((c) => {
+            <div className={`wizard-cuisines-container ${showAllCuisinesMobile ? 'expanded-mobile' : ''}`}>
+              {RESTAURANT_CUISINES.map((c, index) => {
                 const isSelected = form.cuisines.includes(c);
+                const isExtraMobile = index >= 6 && !isSelected;
                 return (
                   <button
                     key={c}
                     type="button"
                     onClick={() => handleToggleCuisine(c)}
-                    className={`portal-pill-btn ${isSelected ? 'selected' : ''}`}
+                    className={`portal-pill-btn ${isSelected ? 'selected' : ''} ${isExtraMobile ? 'extra-cuisine-mobile' : ''}`}
                   >
                     {c}
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                className="cuisine-mobile-toggle-btn"
+                onClick={() => setShowAllCuisinesMobile((prev) => !prev)}
+              >
+                {showAllCuisinesMobile ? 'Show fewer styles ↑' : `+ More cuisines (${RESTAURANT_CUISINES.length - 6}) ↓`}
+              </button>
             </div>
           </div>
         )}
