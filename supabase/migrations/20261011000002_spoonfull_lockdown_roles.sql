@@ -5,6 +5,21 @@
 -- - Public (anon) can only SUBMIT applications, never read CRM data
 -- ====================================================================
 
+-- 0. Bring older live tables up to date (columns the app + policies rely on)
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS assigned_to TEXT;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS assigned_to_name TEXT;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS lead_status TEXT NOT NULL DEFAULT 'new';
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS call_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS first_called_at TIMESTAMPTZ;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS last_contacted_at TIMESTAMPTZ;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS follow_up_date DATE;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS merchant_id UUID;
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'growth';
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS billing_period TEXT NOT NULL DEFAULT 'yearly';
+ALTER TABLE public.restaurant_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_restaurant_leads_assigned_to ON public.restaurant_leads(assigned_to);
+
 -- 1. Clean up team profiles: lowercase emails, enforce valid roles, drop placeholder users
 UPDATE public.crm_team_profiles SET email = lower(trim(email));
 
@@ -49,14 +64,25 @@ REVOKE ALL ON FUNCTION public.crm_profile_id() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.crm_role() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.crm_profile_id() TO authenticated;
 
--- 3. Drop the old wide-open policies
-DROP POLICY IF EXISTS "Public full access to restaurant_leads" ON public.restaurant_leads;
-DROP POLICY IF EXISTS "Public full access to dishes" ON public.dishes;
-DROP POLICY IF EXISTS "Public full access to merchants" ON public.merchants;
-DROP POLICY IF EXISTS "Public full access to call_logs" ON public.call_logs;
-DROP POLICY IF EXISTS "Public full access to admin_notes" ON public.admin_notes;
-DROP POLICY IF EXISTS "Allow authenticated read to crm_team_profiles" ON public.crm_team_profiles;
-DROP POLICY IF EXISTS "Allow update to crm_team_profiles" ON public.crm_team_profiles;
+-- 3. Drop EVERY existing policy on CRM tables (old open ones + any from a previous run)
+DO $$
+DECLARE pol RECORD;
+BEGIN
+  FOR pol IN
+    SELECT policyname, tablename FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN ('restaurant_leads', 'dishes', 'merchants', 'call_logs', 'admin_notes', 'crm_team_profiles')
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
+  END LOOP;
+END $$;
+
+ALTER TABLE public.restaurant_leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dishes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.merchants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.call_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.crm_team_profiles ENABLE ROW LEVEL SECURITY;
 
 -- 4. crm_team_profiles: team can read, ONLY admins can change roles / members
 CREATE POLICY "team_read_profiles" ON public.crm_team_profiles
