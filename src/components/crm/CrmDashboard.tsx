@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Kanban,
@@ -19,7 +19,6 @@ import {
   DUTCH_CITIES,
   RESTAURANT_CUISINES,
   CrmUser,
-  CRM_TEAM_USERS,
 } from '../../types/onboarding';
 import {
   updateLeadStatus,
@@ -39,14 +38,14 @@ import { CrmTableView } from './CrmTableView';
 import { CrmLeadDetailsModal } from './CrmLeadDetailsModal';
 import { NewLeadManualModal } from './NewLeadManualModal';
 import { LogCallModal } from './LogCallModal';
-import { AuthSession } from '../../services/authService';
+import { AuthSession, fetchTeamMembers } from '../../services/authService';
 import { LogOut } from 'lucide-react';
 
 interface CrmDashboardProps {
   leads: RestaurantProfile[];
   onReloadLeads: () => void;
   onOpenQuiz?: () => void;
-  authSession?: AuthSession | null;
+  authSession: AuthSession;
   onSignOut?: () => void;
 }
 
@@ -67,23 +66,15 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [callLogLead, setCallLogLead] = useState<RestaurantProfile | null>(null);
 
-  // Active Team User & Role State - derived from authenticated session
-  const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    if (authSession?.user?.id) return authSession.user.id;
-    return localStorage.getItem('spoonfull_crm_active_user_id') || CRM_TEAM_USERS[0].id;
-  });
+  // Identity & role come strictly from the verified Supabase session (role read from DB).
+  const currentUser: CrmUser = authSession.user;
+  const isAdminUser = currentUser.role === 'admin';
 
-  const currentUser = useMemo<CrmUser>(() => {
-    if (authSession?.user && authSession.user.id === currentUserId) {
-      return authSession.user;
-    }
-    return CRM_TEAM_USERS.find((u) => u.id === currentUserId) || authSession?.user || CRM_TEAM_USERS[0];
-  }, [currentUserId, authSession]);
-
-  const handleUserChange = (userId: string) => {
-    setCurrentUserId(userId);
-    localStorage.setItem('spoonfull_crm_active_user_id', userId);
-  };
+  // Team roster from crm_team_profiles (for filters & assignment)
+  const [teamMembers, setTeamMembers] = useState<CrmUser[]>([]);
+  useEffect(() => {
+    fetchTeamMembers().then(setTeamMembers);
+  }, []);
 
   // Count leads assigned to current user
   const myAssignedCount = useMemo(() => {
@@ -285,8 +276,9 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* User & Role Switcher */}
+          {/* Signed-in identity (read-only, role from database) */}
           <div
+            title={currentUser.email}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -294,7 +286,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
               background: '#FFFFFF',
               border: '1.5px solid #E2E8F0',
               borderRadius: '10px',
-              padding: '0.3rem 0.65rem',
+              padding: '0.4rem 0.75rem',
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
           >
@@ -302,36 +294,18 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 800,
-                color: currentUser.role === 'admin' ? 'var(--portal-brown)' : '#047857',
-                background: currentUser.role === 'admin' ? '#FDF3EE' : '#ECFDF5',
+                color: isAdminUser ? 'var(--portal-brown)' : '#047857',
+                background: isAdminUser ? '#FDF3EE' : '#ECFDF5',
                 padding: '2px 6px',
                 borderRadius: '6px',
               }}
             >
-              {currentUser.role === 'admin' ? 'ADMIN' : 'SALES'}
+              {isAdminUser ? 'ADMIN' : 'SALES'}
             </span>
-            <select
-              value={currentUser.id}
-              onChange={(e) => handleUserChange(e.target.value)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                fontWeight: 700,
-                fontSize: '0.825rem',
-                color: '#0F172A',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-            >
-              {CRM_TEAM_USERS.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name} ({user.role === 'admin' ? 'Admin' : 'Sales'})
-                </option>
-              ))}
-            </select>
+            <span style={{ fontWeight: 700, fontSize: '0.825rem', color: '#0F172A' }}>
+              {currentUser.name}
+            </span>
           </div>
-
-          {/* Quick Filter for Salesperson: My Leads vs All */}
 
           <button
             onClick={() => exportLeadsToCsv(filteredLeads)}
@@ -431,7 +405,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
             <option value="all">All Sales Reps</option>
             <option value="my_leads">Assigned to Me ({currentUser.name.split(' ')[0]})</option>
             <option value="unassigned">Unassigned Leads</option>
-            {CRM_TEAM_USERS.map((u) => (
+            {teamMembers.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name} ({u.role})
               </option>
@@ -544,6 +518,7 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
         lead={activeLead}
         isOpen={Boolean(activeLead)}
         currentUser={currentUser}
+        teamMembers={teamMembers}
         onClose={() => setActiveLead(null)}
         onStatusChange={handleStatusChange}
         onPriorityChange={handlePriorityChange}

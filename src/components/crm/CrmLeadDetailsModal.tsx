@@ -18,13 +18,14 @@ import {
   Gift,
   CheckCheck,
 } from 'lucide-react';
-import { RestaurantProfile, LeadStatus, CrmUser, CRM_TEAM_USERS } from '../../types/onboarding';
+import { RestaurantProfile, LeadStatus, CrmUser } from '../../types/onboarding';
 import { sendOnboardingNotifications } from '../../services/emailService';
 
 interface CrmLeadDetailsModalProps {
   lead: RestaurantProfile | null;
   isOpen: boolean;
   currentUser?: CrmUser;
+  teamMembers?: CrmUser[];
   onClose: () => void;
   onStatusChange: (id: string, newStatus: LeadStatus) => void;
   onPriorityChange: (id: string, priority: 'low' | 'medium' | 'high') => void;
@@ -49,6 +50,7 @@ export const CrmLeadDetailsModal: React.FC<CrmLeadDetailsModalProps> = ({
   lead,
   isOpen,
   currentUser,
+  teamMembers = [],
   onClose,
   onStatusChange,
   onPriorityChange,
@@ -61,7 +63,7 @@ export const CrmLeadDetailsModal: React.FC<CrmLeadDetailsModalProps> = ({
   const [newNoteText, setNewNoteText] = useState('');
   const authorName = currentUser
     ? `${currentUser.name} (${currentUser.role === 'admin' ? 'Admin' : 'Sales'})`
-    : 'Alexandre (Admin)';
+    : 'Team';
   const [isCreatingMerchant, setIsCreatingMerchant] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -282,7 +284,7 @@ export const CrmLeadDetailsModal: React.FC<CrmLeadDetailsModalProps> = ({
                     if (val === 'unassigned') {
                       onAssignLead?.(lead.id, '', '');
                     } else {
-                      const found = CRM_TEAM_USERS.find((u) => u.id === val);
+                      const found = teamMembers.find((u) => u.id === val);
                       if (found) {
                         onAssignLead?.(lead.id, found.id, found.name);
                       }
@@ -291,7 +293,7 @@ export const CrmLeadDetailsModal: React.FC<CrmLeadDetailsModalProps> = ({
                   style={{ background: '#FFFFFF', fontWeight: 700, color: lead.assignedTo ? 'var(--portal-brown)' : '#64748B' }}
                 >
                   <option value="unassigned">Unassigned</option>
-                  {CRM_TEAM_USERS.map((user) => (
+                  {teamMembers.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name} ({user.role === 'admin' ? 'Admin' : 'Sales'})
                     </option>

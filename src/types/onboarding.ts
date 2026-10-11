@@ -18,26 +18,6 @@ export interface CrmUser {
   avatar?: string;
 }
 
-export const CRM_TEAM_USERS: CrmUser[] = [
-  {
-    id: 'user-admin-1',
-    name: 'Alexandre Filippov',
-    email: 'bangalexf@gmail.com',
-    role: 'admin',
-  },
-  {
-    id: 'user-sales-1',
-    name: 'Lucas van Dijk',
-    email: 'lucas@spoonfull.nl',
-    role: 'salesperson',
-  },
-  {
-    id: 'user-sales-2',
-    name: 'Sophie de Boer',
-    email: 'sophie@spoonfull.nl',
-    role: 'salesperson',
-  },
-];
 
 export type LeadStatus =
   | 'new'

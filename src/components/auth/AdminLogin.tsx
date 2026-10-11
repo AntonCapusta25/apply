@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, Mail, KeyRound, AlertCircle, ShieldCheck, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { Mail, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
 import { signInWithEmailPassword, AuthSession } from '../../services/authService';
-import { CRM_TEAM_USERS } from '../../types/onboarding';
 
 interface AdminLoginProps {
   onLoginSuccess: (session: AuthSession) => void;
@@ -15,8 +14,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      setErrorMsg('Please enter your staff or admin email address.');
+    if (!email.trim() || !password) {
+      setErrorMsg('Please enter your email and password.');
       return;
     }
 
@@ -24,7 +23,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     setErrorMsg(null);
 
     try {
-      const res = await signInWithEmailPassword(email.trim(), password.trim());
+      const res = await signInWithEmailPassword(email.trim(), password);
       if (res.success && res.session) {
         onLoginSuccess(res.session);
       } else {
@@ -35,11 +34,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickSelectMember = (memberEmail: string) => {
-    setEmail(memberEmail);
-    setPassword('spoonfull2026');
   };
 
   return (
@@ -154,7 +148,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
                 <input
                   type="email"
                   required
-                  placeholder="e.g. bangalexf@gmail.com or lucas@spoonfull.nl"
+                  autoComplete="username"
+                  placeholder="you@spoonfull.nl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -195,7 +190,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
                 <KeyRound size={16} color="#94A3B8" />
                 <input
                   type="password"
-                  placeholder="Enter your security password"
+                  required
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
@@ -237,60 +234,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </button>
           </form>
 
-          {/* Quick Roster Selector */}
-          <div style={{ marginTop: '1.75rem', borderTop: '1px solid #F1F5F9', paddingTop: '1.25rem' }}>
-            <span
-              style={{
-                display: 'block',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: '#64748B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                marginBottom: '0.65rem',
-                textAlign: 'center',
-              }}
-            >
-              Quick Team Access
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {CRM_TEAM_USERS.map((user) => (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => handleQuickSelectMember(user.email)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '8px',
-                    border: email === user.email ? '1.5px solid var(--portal-brown)' : '1px solid #E2E8F0',
-                    background: email === user.email ? '#FDF3EE' : '#FAF8F5',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F172A' }}>{user.name}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#64748B' }}>({user.email})</span>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      background: user.role === 'admin' ? 'var(--portal-brown)' : '#059669',
-                      color: '#FFFFFF',
-                    }}
-                  >
-                    {user.role === 'admin' ? 'ADMIN' : 'SALES'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <p style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.75rem', color: '#94A3B8' }}>
+            Access is granted by a Spoonfull admin. No account? Contact your admin.
+          </p>
         </div>
       </div>
     </div>

@@ -3,7 +3,8 @@ import { RestaurantPortalWizard } from './components/quiz/RestaurantPortalWizard
 import { CrmDashboard } from './components/crm/CrmDashboard';
 import { AdminLogin } from './components/auth/AdminLogin';
 import { fetchAllLeads } from './services/restaurantService';
-import { getStoredAuthSession, signOutCrm, AuthSession } from './services/authService';
+import { restoreAuthSession, signOutCrm, AuthSession } from './services/authService';
+import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { RestaurantProfile } from './types/onboarding';
 
 function getIsAdminRoute(): boolean {
@@ -14,8 +15,31 @@ function getIsAdminRoute(): boolean {
 export function App() {
   // Check if current URL is the admin route (/admin)
   const [isAdmin, setIsAdmin] = useState<boolean>(() => getIsAdminRoute());
-  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession());
+  const [authSession, setAuthSession] = useState<AuthSession | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [leads, setLeads] = useState<RestaurantProfile[]>([]);
+
+  // Restore verified Supabase session; role is always re-read from the database
+  useEffect(() => {
+    let active = true;
+    restoreAuthSession().then((session) => {
+      if (!active) return;
+      setAuthSession(session);
+      setAuthChecked(true);
+    });
+
+    if (!isSupabaseConfigured) return () => { active = false; };
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setAuthSession(null);
+        setLeads([]);
+      }
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   // Sync route with browser history / popstate
   useEffect(() => {
@@ -48,13 +72,14 @@ export function App() {
   const handleSignOut = async () => {
     await signOutCrm();
     setAuthSession(null);
+    setLeads([]);
   };
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAF8F5' }}>
       {isAdmin ? (
         /* Admin Route Gate: Requires Authentication */
-        !authSession ? (
+        !authChecked ? null : !authSession ? (
           <AdminLogin onLoginSuccess={handleLoginSuccess} />
         ) : (
           <CrmDashboard

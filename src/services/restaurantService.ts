@@ -86,7 +86,7 @@ export async function fetchAllLeads(): Promise<{ leads: RestaurantProfile[]; fro
 export async function createRestaurantLead(
   profile: Omit<RestaurantProfile, 'id' | 'createdAt' | 'updatedAt' | 'leadStatus' | 'adminNotes' | 'callLogs' | 'callAttempts' | 'priority'>
 ): Promise<RestaurantProfile> {
-  const newId = `rest-${Date.now()}`;
+  const newId = crypto.randomUUID();
   const now = new Date().toISOString();
 
   const newLead: RestaurantProfile = {
@@ -115,10 +115,11 @@ export async function createRestaurantLead(
   // Sync to Supabase if configured
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('restaurant_leads')
         .insert([
           {
+            id: newId,
             restaurant_name: newLead.restaurantName,
             owner_name: newLead.ownerName,
             email: newLead.email,
@@ -141,12 +142,10 @@ export async function createRestaurantLead(
             assigned_to: newLead.assignedTo || null,
             assigned_to_name: newLead.assignedToName || null,
           },
-        ])
-        .select();
+        ]);
 
-      if (!error && data && data[0]) {
-        newLead.id = data[0].id;
-        saveLocalLeads(updatedList.map((l) => (l.id === newId ? newLead : l)));
+      if (error) {
+        console.warn('Supabase insert failed', error);
       }
     } catch (err) {
       console.warn('Supabase insert skipped or offline', err);
