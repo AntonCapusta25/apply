@@ -11,7 +11,6 @@ import {
   Rocket,
   Shield,
   Users,
-  Database,
   UserCheck,
 } from 'lucide-react';
 import {
@@ -47,7 +46,6 @@ interface CrmDashboardProps {
   leads: RestaurantProfile[];
   onReloadLeads: () => void;
   onOpenQuiz?: () => void;
-  onOpenSupabaseConfig?: () => void;
   authSession?: AuthSession | null;
   onSignOut?: () => void;
 }
@@ -56,7 +54,6 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
   leads,
   onReloadLeads,
   onOpenQuiz,
-  onOpenSupabaseConfig,
   authSession,
   onSignOut,
 }) => {
@@ -335,61 +332,6 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
           </div>
 
           {/* Quick Filter for Salesperson: My Leads vs All */}
-          {currentUser.role === 'salesperson' && (
-            <div
-              style={{
-                display: 'flex',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '10px',
-                padding: '3px',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedRep(selectedRep === 'my_leads' ? 'all' : 'my_leads')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.4rem 0.75rem',
-                  borderRadius: '7px',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  border: 'none',
-                  background: selectedRep === 'my_leads' ? '#ECFDF5' : 'transparent',
-                  color: selectedRep === 'my_leads' ? '#065F46' : '#64748B',
-                  cursor: 'pointer',
-                }}
-              >
-                <UserCheck size={13} />
-                <span>My Leads ({myAssignedCount})</span>
-              </button>
-            </div>
-          )}
-
-          {/* Admin Database Config Modal Trigger */}
-          {currentUser.role === 'admin' && onOpenSupabaseConfig && (
-            <button
-              onClick={onOpenSupabaseConfig}
-              title="Supabase Database Status & Migrations"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.55rem 0.85rem',
-                borderRadius: '10px',
-                border: '1px solid #E2E8F0',
-                background: '#FFFFFF',
-                color: '#334155',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <Database size={14} style={{ color: '#059669' }} /> Database
-            </button>
-          )}
 
           <button
             onClick={() => exportLeadsToCsv(filteredLeads)}

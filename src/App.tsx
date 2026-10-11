@@ -2,9 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RestaurantPortalWizard } from './components/quiz/RestaurantPortalWizard';
 import { CrmDashboard } from './components/crm/CrmDashboard';
 import { AdminLogin } from './components/auth/AdminLogin';
-import { SupabaseConfigModal } from './components/layout/SupabaseConfigModal';
 import { fetchAllLeads } from './services/restaurantService';
-import { checkSupabaseConnection, SupabaseHealth } from './lib/supabaseClient';
 import { getStoredAuthSession, signOutCrm, AuthSession } from './services/authService';
 import { RestaurantProfile } from './types/onboarding';
 
@@ -18,8 +16,6 @@ export function App() {
   const [isAdmin, setIsAdmin] = useState<boolean>(() => getIsAdminRoute());
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession());
   const [leads, setLeads] = useState<RestaurantProfile[]>([]);
-  const [supabaseHealth, setSupabaseHealth] = useState<SupabaseHealth | null>(null);
-  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
 
   // Sync route with browser history / popstate
   useEffect(() => {
@@ -35,17 +31,11 @@ export function App() {
     setLeads(res.leads);
   }, []);
 
-  const refreshHealth = useCallback(async () => {
-    const health = await checkSupabaseConnection();
-    setSupabaseHealth(health);
-  }, []);
-
   useEffect(() => {
     if (isAdmin && authSession) {
       loadLeads();
     }
-    refreshHealth();
-  }, [isAdmin, authSession, loadLeads, refreshHealth]);
+  }, [isAdmin, authSession, loadLeads]);
 
   const handleLeadCreated = (newLead: RestaurantProfile) => {
     setLeads((prev) => [newLead, ...prev]);
@@ -70,7 +60,6 @@ export function App() {
           <CrmDashboard
             leads={leads}
             onReloadLeads={loadLeads}
-            onOpenSupabaseConfig={() => setIsSupabaseModalOpen(true)}
             authSession={authSession}
             onSignOut={handleSignOut}
           />
@@ -80,16 +69,6 @@ export function App() {
         <RestaurantPortalWizard
           onLeadCreated={handleLeadCreated}
           leadCount={leads.length}
-        />
-      )}
-
-      {/* Supabase Connection & SQL Migration Modal (Available on Admin) */}
-      {isAdmin && (
-        <SupabaseConfigModal
-          isOpen={isSupabaseModalOpen}
-          onClose={() => setIsSupabaseModalOpen(false)}
-          health={supabaseHealth}
-          onRefreshHealth={refreshHealth}
         />
       )}
     </div>
