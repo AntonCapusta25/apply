@@ -38,35 +38,41 @@ export default defineConfig(({ mode }) => {
                   return;
                 }
 
-                const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                const fromEmailToUse = fromEmail;
+                const replyToEmail = fromEmail || 'info@spoonfull.nl';
+
+                const sendPayload = (senderEmail: string) => ({
+                  personalizations: [{ to: [{ email: to }] }],
+                  from: { email: senderEmail, name: fromName },
+                  reply_to: { email: replyToEmail, name: fromName },
+                  subject,
+                  content: [{ type: 'text/html', value: htmlContent || textContent || '' }],
+                });
+
+                let response = await fetch('https://api.sendgrid.com/v3/mail/send', {
                   method: 'POST',
                   headers: {
                     Authorization: `Bearer ${sendgridApiKey}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({
-                    personalizations: [
-                      {
-                        to: [{ email: to }],
-                      },
-                    ],
-                    from: {
-                      email: fromEmail,
-                      name: fromName,
-                    },
-                    reply_to: {
-                      email: fromEmail,
-                      name: fromName,
-                    },
-                    subject,
-                    content: [
-                      {
-                        type: 'text/html',
-                        value: htmlContent || textContent || '',
-                      },
-                    ],
-                  }),
+                  body: JSON.stringify(sendPayload(fromEmailToUse)),
                 });
+
+                // If from address not verified yet, fallback to verified support.spoonfull@gmail.com
+                if (response.status === 403 && fromEmailToUse !== 'support.spoonfull@gmail.com') {
+                  const errText = await response.text();
+                  if (errText.includes('Sender Identity')) {
+                    console.warn(`[SendGrid Middleware] '${fromEmailToUse}' pending domain verification, falling back to verified sender support.spoonfull@gmail.com`);
+                    response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${sendgridApiKey}`,
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(sendPayload('support.spoonfull@gmail.com')),
+                    });
+                  }
+                }
 
                 if (response.ok || response.status === 202) {
                   res.statusCode = 200;
